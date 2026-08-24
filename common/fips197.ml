@@ -667,13 +667,13 @@ prove(`aes256_cipher (word 0x014730f80ac625fe84f026c60bfd547d)
     AESAVS_ZERO_KEY_256_SCHEDULE)) THEN REFL_TAC);;
 
 (* ========================================================================= *)
-(* KAT: AES-256 with the McGrew-Viega GCM Test Case 16 key                   *)
+(* KAT: AES-256 with the McGrew-Viega GCM Test Case 15 key                   *)
 (* (the AES-128 GCM test key 0xFEFFE992...67308308 repeated to 32 bytes).    *)
-(* Used by the AES-256-GCM 4-block KAT (TC16) in common/gcm.ml.              *)
+(* Used by the AES-256-GCM 4-block KAT (TC15) in common/gcm.ml.              *)
 (* ========================================================================= *)
 
-let NIST_TC16_KEY_SCHEDULE = new_definition
-  `NIST_TC16_KEY_SCHEDULE:(128 word) list =
+let NIST_TC15_KEY_SCHEDULE = new_definition
+  `NIST_TC15_KEY_SCHEDULE:(128 word) list =
     [ word 0xFEFFE9928665731C6D6A8F9467308308
     ; word 0xFEFFE9928665731C6D6A8F9467308308
     ; word 0xFB13D9177D76AA0B101C259F772CA697
@@ -691,16 +691,16 @@ let NIST_TC16_KEY_SCHEDULE = new_definition
     ; word 0x3D60B272570874DF0EE67B6875D0E691
     ]`;;
 
-(* GCM TC16: E(K,J0) where J0 = IV || 1 = 0xCAFEBABEFACEDBADDECAF88800000001 *)
+(* GCM TC15: E(K,J0) where J0 = IV || 1 = 0xCAFEBABEFACEDBADDECAF88800000001 *)
 prove(`aes256_cipher (word 0xCAFEBABEFACEDBADDECAF88800000001)
-                     NIST_TC16_KEY_SCHEDULE =
+                     NIST_TC15_KEY_SCHEDULE =
        word 0xfd2caa16a5832e76aa132c1453eeda7e`,
   CONV_TAC(LAND_CONV(FIPS197_ENCRYPT_FAST_CONV aes256_cipher
-    NIST_TC16_KEY_SCHEDULE)) THEN REFL_TAC);;
+    NIST_TC15_KEY_SCHEDULE)) THEN REFL_TAC);;
 
-(* GCM TC16: E(K,0) = H, the GHASH subkey *)
+(* GCM TC15: E(K,0) = H, the GHASH subkey *)
 prove(`aes256_cipher (word 0x00000000000000000000000000000000)
-                     NIST_TC16_KEY_SCHEDULE =
+                     NIST_TC15_KEY_SCHEDULE =
        word 0xacbef20579b4b8ebce889bac8732dad7`,
   CONV_TAC(LAND_CONV(FIPS197_ENCRYPT_FAST_CONV aes256_cipher
-    NIST_TC16_KEY_SCHEDULE)) THEN REFL_TAC);;
+    NIST_TC15_KEY_SCHEDULE)) THEN REFL_TAC);;

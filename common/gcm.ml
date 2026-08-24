@@ -457,7 +457,7 @@ let tc14_tag = mk_tag tc14_ghash tc14_aes_j0;;
 (* T = 0xd0d1c8a799996bf0265b98b5d48ab919 *)
 
 (* ========================================================================= *)
-(* Test Case 16: AES-256, 4-block P, empty A                                 *)
+(* Test Case 15: AES-256, 4-block P, empty A                                 *)
 (* Key: 0xFEFFE992...67308308 repeated (32 bytes)                            *)
 (* IV:  0xcafebabefacedbaddecaf888                                           *)
 (* P:   d9313225...b16aedf5aa0de657ba637b391aafd255 (4 blocks)               *)
@@ -468,20 +468,20 @@ let tc14_tag = mk_tag tc14_ghash tc14_aes_j0;;
 (* and 5-block GHASH) with aes256_cipher and a non-trivial key/IV.           *)
 (* ========================================================================= *)
 
-let tc16_H = FIPS197_ENCRYPT_FAST_CONV aes256_cipher NIST_TC16_KEY_SCHEDULE
-  `aes256_cipher (word 0 : 128 word) NIST_TC16_KEY_SCHEDULE`;;
+let tc15_H = FIPS197_ENCRYPT_FAST_CONV aes256_cipher NIST_TC15_KEY_SCHEDULE
+  `aes256_cipher (word 0 : 128 word) NIST_TC15_KEY_SCHEDULE`;;
 (* H = 0xacbef20579b4b8ebce889bac8732dad7 *)
 
-let tc16_J0 = WORD_RED_CONV
+let tc15_J0 = WORD_RED_CONV
   `word_join ((word:num->96 word) 0xcafebabefacedbaddecaf888)
              ((word:num->32 word) 1) : 128 word`;;
 
-let tc16_inc32_J0 = INC32_CONV
+let tc15_inc32_J0 = INC32_CONV
   `inc32 (word 0xCAFEBABEFACEDBADDECAF88800000001 : 128 word)`;;
 
 (* GCTR: 4 blocks, one AES call at a time *)
-let tc16_gctr = GCTR_FAST_CONV aes256_cipher NIST_TC16_KEY_SCHEDULE
-  `gctr aes256_cipher NIST_TC16_KEY_SCHEDULE
+let tc15_gctr = GCTR_FAST_CONV aes256_cipher NIST_TC15_KEY_SCHEDULE
+  `gctr aes256_cipher NIST_TC15_KEY_SCHEDULE
         (word 0xCAFEBABEFACEDBADDECAF88800000002 : 128 word)
         [ word 0xD9313225F88406E5A55909C5AFF5269A
         ; word 0x86A7A9531534F7DA2E4C303D8A318A72
@@ -490,25 +490,25 @@ let tc16_gctr = GCTR_FAST_CONV aes256_cipher NIST_TC16_KEY_SCHEDULE
 (* C = 522dc1f0.. 643a8cdc.. 8cb08e48.. c5f61e63.. *)
 
 (* GHASH: 5 blocks (4 ciphertext + 1 len_block), one step at a time *)
-let tc16_gh0 = NIST_GHASH_STEP_CONV
+let tc15_gh0 = NIST_GHASH_STEP_CONV
   `nist_ghash (word 0xacbef20579b4b8ebce889bac8732dad7) (word 0 : 128 word)
          [ word 0x522DC1F099567D07F47F37A32A84427D
          ; word 0x643A8CDCBFE5C0C97598A2BD2555D1AA
          ; word 0x8CB08E48590DBB3DA7B08B1056828838
          ; word 0xC5F61E6393BA7A0ABCC9F662898015AD
          ; word 0x00000000000000000000000000000200 ]`;;
-let tc16_gh1 = CONV_RULE (RAND_CONV NIST_GHASH_STEP_CONV) tc16_gh0;;
-let tc16_gh2 = CONV_RULE (RAND_CONV NIST_GHASH_STEP_CONV) tc16_gh1;;
-let tc16_gh3 = CONV_RULE (RAND_CONV NIST_GHASH_STEP_CONV) tc16_gh2;;
-let tc16_gh4 = CONV_RULE (RAND_CONV NIST_GHASH_STEP_CONV) tc16_gh3;;
-let tc16_ghash = CONV_RULE (RAND_CONV (REWRITE_CONV [nist_ghash])) tc16_gh4;;
+let tc15_gh1 = CONV_RULE (RAND_CONV NIST_GHASH_STEP_CONV) tc15_gh0;;
+let tc15_gh2 = CONV_RULE (RAND_CONV NIST_GHASH_STEP_CONV) tc15_gh1;;
+let tc15_gh3 = CONV_RULE (RAND_CONV NIST_GHASH_STEP_CONV) tc15_gh2;;
+let tc15_gh4 = CONV_RULE (RAND_CONV NIST_GHASH_STEP_CONV) tc15_gh3;;
+let tc15_ghash = CONV_RULE (RAND_CONV (REWRITE_CONV [nist_ghash])) tc15_gh4;;
 (* S = 0x4db870d37cb75fcb46097c36230d1612 *)
 
-let tc16_aes_j0 = FIPS197_ENCRYPT_FAST_CONV aes256_cipher NIST_TC16_KEY_SCHEDULE
+let tc15_aes_j0 = FIPS197_ENCRYPT_FAST_CONV aes256_cipher NIST_TC15_KEY_SCHEDULE
   `aes256_cipher (word 0xCAFEBABEFACEDBADDECAF88800000001 : 128 word)
-                 NIST_TC16_KEY_SCHEDULE`;;
+                 NIST_TC15_KEY_SCHEDULE`;;
 
-let tc16_tag = mk_tag tc16_ghash tc16_aes_j0;;
+let tc15_tag = mk_tag tc15_ghash tc15_aes_j0;;
 (* T = 0xb094dac5d93471bdec1a502270e3cc6c *)
 
 *)
