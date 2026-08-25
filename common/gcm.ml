@@ -18,7 +18,6 @@
 (* ========================================================================= *)
 
 needs "common/fips197.ml";;
-needs "common/ghash.ml";;
 needs "common/ghash_nist_defs.ml";;
 needs "common/karatsuba_pmul.ml";;
 
@@ -150,8 +149,12 @@ let NIST_GHASH_STEP_CONV =
   DEPTH_CONV WORD_RED_CONV THENC
   ONCE_DEPTH_CONV NIST_DOT_CONV;;
 
-let rec NIST_GHASH_CONV tm =
-  (NIST_GHASH_STEP_CONV THENC TRY_CONV NIST_GHASH_CONV) tm;;
+(* Fold a whole block list by repeating NIST_GHASH_STEP_CONV until no progress.
+   CHANGED_CONV makes the step fail once the term is fully reduced (the base
+   case nist_ghash h acc [] -> acc, then a bare word), so REPEATC terminates.
+   (An earlier `STEP THENC TRY_CONV NIST_GHASH_CONV` form looped forever: the
+   step conv never fails, so the TRY_CONV recursion never stopped.) *)
+let NIST_GHASH_CONV = REPEATC (CHANGED_CONV NIST_GHASH_STEP_CONV);;
 
 (* ========================================================================= *)
 (* GCM-AE: NIST SP 800-38D Algorithm 4 (authenticated encryption).           *)
@@ -268,6 +271,20 @@ let ghash_2blk_step0 = NIST_GHASH_STEP_CONV
 let ghash_2blk_step1 = CONV_RULE (RAND_CONV NIST_GHASH_STEP_CONV) ghash_2blk_step0;;
 let ghash_2blk_done = CONV_RULE (RAND_CONV (REWRITE_CONV [nist_ghash])) ghash_2blk_step1;;
 
+(* Exercise the recursive driver NIST_GHASH_CONV once, so the whole-fold path
+   (not just NIST_GHASH_STEP_CONV) is validated. Same 2-block input as above;
+   the result must match the stepwise ghash_2blk_done. Cost is linear in the
+   number of blocks (~10s per nist_dot), hence interactive-only. *)
+let ghash_2blk_via_conv = NIST_GHASH_CONV
+  `nist_ghash (word 0xB83B533708BF535D0AA6E52980D53B78) (word 0)
+         [ word 0x42831EC2217774244B7221B784D0D49C
+         ; word 0xE3AA212F2C02A4E035C17E2329ACA12E : 128 word]`;;
+(* Cross-check: driver result agrees with the stepwise fold. *)
+let ghash_conv_agrees =
+  if rand (concl ghash_2blk_via_conv) = rand (concl ghash_2blk_done)
+  then ghash_2blk_via_conv
+  else failwith "NIST_GHASH_CONV disagrees with stepwise GHASH";;
+
 (* ========================================================================= *)
 (* GCTR KATs (deconstructed, ~7s each with FAST_CONV)                        *)
 (* ========================================================================= *)
@@ -286,6 +303,19 @@ let gctr_kat_3 = GCTR_FAST_CONV aes128_cipher NIST_TC3_KEY_SCHEDULE
         (word 0xCAFEBABEFACEDBADDECAF88800000002 : 128 word)
         [ word 0xD9313225F88406E5A55909C5AFF5269A
         ; word 0x86A7A9531534F7DA2E4C303D8A318A72 : 128 word]`;;
+
+(* Exercise the recursive driver GCTR_CONV once, so the slow (non-FAST) path is
+   validated. Same 1-block input as gctr_kat_1; the result must match. GCTR_CONV
+   uses FIPS197_ENCRYPT_CONV (not the FAST variant), so it is ~80s/block — far
+   too slow for an always-on KAT, hence interactive-only. *)
+let gctr_kat_via_conv = GCTR_CONV aes128_cipher AESAVS_ZERO_KEY_128_SCHEDULE
+  `gctr aes128_cipher AESAVS_ZERO_KEY_128_SCHEDULE (word 2 : 128 word)
+        [word 0 : 128 word]`;;
+(* Cross-check: slow driver agrees with the FAST result. *)
+let gctr_conv_agrees =
+  if rand (concl gctr_kat_via_conv) = rand (concl gctr_kat_1)
+  then gctr_kat_via_conv
+  else failwith "GCTR_CONV disagrees with GCTR_FAST_CONV";;
 
 (* ------------------------------------------------------------------------- *)
 (* GCM tag = S XOR E(K,J0). mk_tag builds this XOR from the computed GHASH   *)
